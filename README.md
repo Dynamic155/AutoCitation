@@ -1,4 +1,4 @@
-# AutoCiteation
+# AutoCitation
 Generate Harvard-style references for web pages. Given a list of URLs, it fetches each page, extracts relevant metadata (like title, author, and publication date), and formats it into a reference. The references are then written to an output file.
 
 ## Features
