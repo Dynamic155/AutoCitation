@@ -18,29 +18,47 @@ class AuthorFinder:
 
         if self.deserialized_json:
             try:
-                author = self.deserialized_json["author"]["name"]
-                author = author.split(" ")
+                if isinstance(self.deserialized_json, list):
+                    for item in self.deserialized_json:
+                        if isinstance(item, dict) and "author" in item:
+                            return self.extract_author(item["author"])
+                elif isinstance(self.deserialized_json, dict) and "author" in self.deserialized_json:
+                    return self.extract_author(self.deserialized_json["author"])
+            except Exception as e:
+                print(f"Error extracting author from JSON-LD: {e}")
 
-                if len(author) == 3:
-                    return f"{author[2]}, {author[1][0]}."
-                if len(author) == 2:
-                    return f"{author[1]}, {author[0][0]}."
-            except Exception:
-                try:
+            try:
+                if isinstance(self.deserialized_json, dict):
                     return self.deserialized_json["page"]["pageInfo"]["publisher"]
-                except KeyError:
-                    pass
+                else:
+                    for item in self.deserialized_json:
+                        if "page" in item and "pageInfo" in item["page"]:
+                            return item["page"]["pageInfo"]["publisher"]
+            except KeyError:
+                pass
 
         author_tag = self.soup.find(class_="blog-entry__date--full fine-print")
         if author_tag:
             author_text = author_tag.get_text()
             match = re.search(r"(?<=By ).*(?= published)", author_text)
             if match:
-                author = match.group(0).split(" ")
-                if len(author) == 2:
-                    return f"{author[1]}, {author[0][0]}."
-        
+                return self.format_author_name(match.group(0))
+
         return "No author available"
+
+    def extract_author(self, author_data):
+        if isinstance(author_data, list):
+            author_data = author_data[0]
+        author = author_data["name"]
+        return self.format_author_name(author)
+
+    def format_author_name(self, author):
+        author = author.split(" ")
+        if len(author) == 3:
+            return f"{author[2]}, {author[1][0]}."
+        if len(author) == 2:
+            return f"{author[1]}, {author[0][0]}."
+        return author
 
 def get_meta_content(soup, meta_names):
     for meta_name in meta_names:
@@ -65,7 +83,10 @@ def get_publication_date(soup):
     return "No date available"
 
 def generate_harvard_reference(url):
-    headers = {"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0"}
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0",
+        "Accept-Language": "en-US,en;q=0.5"
+    }
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()
