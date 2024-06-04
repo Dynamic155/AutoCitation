@@ -49,6 +49,9 @@ Doe, J. (2020) Example Article 1. Available at: https://example.com/article1 (Ac
 Smith, A. (2021) Example Article 2. Available at: https://example.com/article2 (Accessed: 27 May 2024).
 ```
 
+## Thank you for using
+If you found this tool helpful please star the repository <3
+
 ## Contributing
 
 If you encounter any issues or have suggestions for improvement, please open an issue or submit a pull request.
