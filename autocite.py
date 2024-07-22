@@ -4,6 +4,8 @@ from datetime import datetime
 import json
 import re
 import os
+import time
+import random
 
 class AuthorFinder:
     def __init__(self, soup, deserialized_json):
@@ -17,25 +19,9 @@ class AuthorFinder:
                 return link_tag.get("content")
 
         if self.deserialized_json:
-            try:
-                if isinstance(self.deserialized_json, list):
-                    for item in self.deserialized_json:
-                        if isinstance(item, dict) and "author" in item:
-                            return self.extract_author(item["author"])
-                elif isinstance(self.deserialized_json, dict) and "author" in self.deserialized_json:
-                    return self.extract_author(self.deserialized_json["author"])
-            except Exception as e:
-                print(f"Error extracting author from JSON-LD: {e}")
-
-            try:
-                if isinstance(self.deserialized_json, dict):
-                    return self.deserialized_json["page"]["pageInfo"]["publisher"]
-                else:
-                    for item in self.deserialized_json:
-                        if "page" in item and "pageInfo" in item["page"]:
-                            return item["page"]["pageInfo"]["publisher"]
-            except KeyError:
-                pass
+            author = self.extract_author_from_json(self.deserialized_json)
+            if author:
+                return author
 
         author_tag = self.soup.find(class_="blog-entry__date--full fine-print")
         if author_tag:
@@ -46,6 +32,29 @@ class AuthorFinder:
 
         return "No author available"
 
+    def extract_author_from_json(self, json_data):
+        try:
+            if isinstance(json_data, list):
+                for item in json_data:
+                    if isinstance(item, dict) and "author" in item:
+                        return self.extract_author(item["author"])
+            elif isinstance(json_data, dict) and "author" in json_data:
+                return self.extract_author(json_data["author"])
+        except Exception as e:
+            print(f"Error extracting author from JSON-LD: {e}")
+
+        try:
+            if isinstance(json_data, dict):
+                return json_data["page"]["pageInfo"]["publisher"]
+            else:
+                for item in json_data:
+                    if "page" in item and "pageInfo" in item["page"]:
+                        return item["page"]["pageInfo"]["publisher"]
+        except KeyError:
+            pass
+
+        return None
+
     def extract_author(self, author_data):
         if isinstance(author_data, list):
             author_data = author_data[0]
@@ -53,11 +62,11 @@ class AuthorFinder:
         return self.format_author_name(author)
 
     def format_author_name(self, author):
-        author = author.split(" ")
-        if len(author) == 3:
-            return f"{author[2]}, {author[1][0]}."
-        if len(author) == 2:
-            return f"{author[1]}, {author[0][0]}."
+        author_parts = author.split(" ")
+        if len(author_parts) == 3:
+            return f"{author_parts[2]}, {author_parts[1][0]}."
+        if len(author_parts) == 2:
+            return f"{author_parts[1]}, {author_parts[0][0]}."
         return author
 
 def get_meta_content(soup, meta_names):
@@ -84,16 +93,26 @@ def get_publication_date(soup):
 
 def generate_harvard_reference(url):
     headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0",
-        "Accept-Language": "en-US,en;q=0.5"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+        "Connection": "keep-alive"
     }
+    
+    # Adding a random delay
+    time.sleep(random.uniform(1, 5))
+    
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, verify=False)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
         
         json_ld = soup.find('script', type='application/ld+json')
-        deserialized_json = json.loads(json_ld.string) if json_ld else None
+        try:
+            deserialized_json = json.loads(json_ld.string) if json_ld else None
+        except json.JSONDecodeError:
+            deserialized_json = None
         
         title_tag = soup.find('title')
         title = title_tag.text if title_tag else 'No title available'
