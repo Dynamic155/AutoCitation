@@ -1,3 +1,9 @@
+## WARNING: DEPRECATED
+This repository is deprecated. Please use this one instead: [AutoCiteV2](https://github.com/Dynamic155/AutoCiteV2). Thank you <3
+We decided to make this change because we want to have a web UI for the tool. Instead of updating the repository, I simply made a new one. This is because this is the bare bones, and I could see why someone would want this, instead of using a flask server, with a web UI. We understand that this might be better to work on instead of figuring out how our stuff works. We will no longer work on this repo, thank you. 
+
+https://github.com/Dynamic155/AutoCiteV2
+
 # AutoCitation
 Generate Harvard-style references for web pages. Given a list of URLs, it fetches each page, extracts relevant metadata (like title, author, and publication date), and formats it into a reference. The references are then written to an output file.
 
